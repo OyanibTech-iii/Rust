@@ -1,60 +1,23 @@
-use totp_rs::{Algorithm, TOTP, Secret};
-use std::time::{SystemTime, UNIX_EPOCH};
-use std::io;
+mod auth;
+mod models;
+mod utils;
+
+use auth::totp_service::TotpService;
+use models::user_secret::UserSecret;
 
 fn main() {
-    println!("Rust Authenticator (TOTP Demo)");
+    println!("Secure Rust Authenticator System");
 
-    // Generate a secret (in real apps, store this securely per user)
-    let secret = Secret::generate_secret();
+    // Create user secret (simulated user account)
+    let user_secret = UserSecret::new();
 
-    let totp = TOTP::new(
-        Algorithm::SHA1,
-        6,          // 6-digit code
-        1,          // step: 30 seconds default
-        30,
-        secret.to_bytes().unwrap(),
-    ).unwrap();
+    let service = TotpService::new(user_secret.clone());
 
-    println!("\nYour secret key (save this!): {}", secret.to_encoded());
+    // Generate OTP
+    let otp = service.generate_otp();
+    println!("Generated OTP: {}", otp);
 
-    loop {
-        println!("\nChoose option:");
-        println!("1. Generate OTP");
-        println!("2. Verify OTP");
-        println!("3. Exit");
-
-        let mut choice = String::new();
-        io::stdin().read_line(&mut choice).unwrap();
-
-        match choice.trim() {
-            "1" => {
-                let otp = totp.generate_current().unwrap();
-                println!("Current OTP: {}", otp);
-            }
-
-            "2" => {
-                println!("Enter OTP:");
-                let mut input = String::new();
-                io::stdin().read_line(&mut input).unwrap();
-
-                let input = input.trim();
-
-                let is_valid = totp.check_current(input).unwrap();
-
-                if is_valid {
-                    println!("Authentication SUCCESS");
-                } else {
-                    println!("Authentication FAILED");
-                }
-            }
-
-            "3" => {
-                println!("Goodbye!");
-                break;
-            }
-
-            _ => println!("Invalid option"),
-        }
-    }
+    // Verify OTP (demo)
+    let result = service.verify(&otp);
+    println!("Verification result: {}", result);
 }
